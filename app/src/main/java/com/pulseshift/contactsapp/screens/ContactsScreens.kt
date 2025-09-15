@@ -2,9 +2,12 @@ package com.pulseshift.contactsapp.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,10 +23,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pulseshift.contactsapp.model.Contact
 import com.pulseshift.contactsapp.viewmodel.ContactsViewModel
 import androidx.compose.foundation.lazy.items  // ← Important!
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactsScreen(
     onClickAdd: () -> Unit,
@@ -35,6 +42,7 @@ fun ContactsScreen(
     val contacts by viewModel.contacts.observeAsState(emptyList())
 
     Scaffold(
+        topBar = { TopAppBar(title = { Text(text = "My contacts") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onClickAdd) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Contact")
@@ -52,6 +60,12 @@ fun ContactsScreen(
             LazyColumn(Modifier.padding(padding)) {
                 items(contacts) { contact ->
                     Card(Modifier.fillMaxWidth().padding(8.dp)) {
+
+                        Icon(imageVector = Icons.Outlined.AccountCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp))
+                        Spacer(Modifier.width(16.dp))
+
                         Column(Modifier.padding(16.dp)) {
                             Text("Name: ${contact.name}")
                             Text("Phone: ${contact.phoneNumber}")
