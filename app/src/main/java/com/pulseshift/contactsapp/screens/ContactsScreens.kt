@@ -2,6 +2,7 @@ package com.pulseshift.contactsapp.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -60,20 +61,27 @@ fun ContactsScreen(
             LazyColumn(Modifier.padding(padding)) {
                 items(contacts) { contact ->
                     Card(Modifier.fillMaxWidth().padding(8.dp)) {
-
-                        Icon(imageVector = Icons.Outlined.AccountCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp))
-                        Spacer(Modifier.width(16.dp))
-
-                        Column(Modifier.padding(16.dp)) {
-                            Text("Name: ${contact.name}")
-                            Text("Phone: ${contact.phoneNumber}")
-                            if (contact.email.isNotBlank()) {
-                                Text("Email: ${contact.email}")
-                            }
-                            if (contact.imageUrl != null && contact.imageUrl!!.isNotBlank()) {
-                                Text("Image: ${contact.imageUrl}")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.AccountCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(Modifier.width(16.dp))
+                            Column {
+                                Text("Name: ${contact.name}")
+                                Text("Phone: ${contact.phoneNumber}")
+                                if (contact.email.isNotBlank()) {
+                                    Text("Email: ${contact.email}")
+                                }
+                                if (contact.imageUrl != null && contact.imageUrl!!.isNotBlank()) {
+                                    Text("Image: ${contact.imageUrl}")
+                                }
                             }
                         }
                     }
