@@ -17,7 +17,7 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController() // ✅ Define navController
+    val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screen.Contacts.route) {
         composable(Screen.Contacts.route) {
@@ -28,15 +28,20 @@ fun AppNavigation() {
                 }
             )
         }
+
         composable(Screen.AddContact.route) {
             AddContactScreen(onClickBack = { navController.popBackStack() })
         }
+
         composable(
             route = Screen.ContactDetails.route,
             arguments = listOf(navArgument("contactId") { type = NavType.IntType })
-        ) { navBackStackEntry ->
-            val contactId = navBackStackEntry.arguments?.getInt("contactId") ?: 0
-            ContactDetailsScreen(contactId)
+        ) { backStackEntry ->
+            val contactId = backStackEntry.arguments?.getInt("contactId") ?: 0
+            ContactDetailsScreen(
+                contactId = contactId,
+                navController = navController
+            )
         }
     }
 }

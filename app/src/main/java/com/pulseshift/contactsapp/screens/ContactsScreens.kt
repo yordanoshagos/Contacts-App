@@ -1,5 +1,6 @@
 package com.pulseshift.contactsapp.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pulseshift.contactsapp.model.Contact
@@ -46,8 +49,10 @@ fun ContactsScreen(
             LazyColumn(Modifier.padding(padding)) {
                 items(contacts) { contact ->
                     Card(
-                        onClick = { onClickContact(contact.contactId) }, // ✅ Use it here
+                        onClick = { onClickContact(contact.contactId) },
                         modifier = Modifier
+                            .clickable {  }
+                            .pointerHoverIcon(PointerIcon.Hand)
                             .fillMaxWidth()
                             .padding(8.dp)
                     ) {
@@ -60,7 +65,10 @@ fun ContactsScreen(
                             Icon(
                                 imageVector = Icons.Outlined.AccountCircle,
                                 contentDescription = null,
-                                modifier = Modifier.size(64.dp)
+                                modifier = Modifier
+                                    .clickable {  }
+                                    .pointerHoverIcon(PointerIcon.Hand)
+                                    .size(64.dp)
                             )
                             Spacer(Modifier.width(16.dp))
                             Column {

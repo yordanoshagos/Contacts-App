@@ -70,7 +70,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
-
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.runtime.livedata)
