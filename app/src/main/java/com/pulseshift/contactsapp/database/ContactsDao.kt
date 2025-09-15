@@ -17,3 +17,6 @@ interface ContactsDao {
     @Query("SELECT * FROM my_contacts WHERE contactId = :contactId")
     fun getContactById(contactId: Int): LiveData<Contact>
 }
+
+// everything you want to do onthe table you define it here
+//room will use this ther eis an  interface and room will do the concrett implimentation , room is object relational mapper its, we add it then to database class

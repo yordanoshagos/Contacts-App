@@ -1,45 +1,30 @@
 package com.pulseshift.contactsapp.screens
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.pulseshift.contactsapp.model.Contact
-import com.pulseshift.contactsapp.viewmodel.ContactsViewModel
-import androidx.compose.foundation.lazy.items  // ← Important!
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.pulseshift.contactsapp.model.Contact
+import com.pulseshift.contactsapp.viewmodel.ContactsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactsScreen(
     onClickAdd: () -> Unit,
+    onClickContact: (Int) -> Unit, // ✅ Accept click handler
     viewModel: ContactsViewModel = viewModel()
 ) {
-
     viewModel.getContacts()
-
     val contacts by viewModel.contacts.observeAsState(emptyList())
 
     Scaffold(
@@ -60,7 +45,12 @@ fun ContactsScreen(
         } else {
             LazyColumn(Modifier.padding(padding)) {
                 items(contacts) { contact ->
-                    Card(Modifier.fillMaxWidth().padding(8.dp)) {
+                    Card(
+                        onClick = { onClickContact(contact.contactId) }, // ✅ Use it here
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -79,7 +69,7 @@ fun ContactsScreen(
                                 if (contact.email.isNotBlank()) {
                                     Text("Email: ${contact.email}")
                                 }
-                                if (contact.imageUrl != null && contact.imageUrl!!.isNotBlank()) {
+                                if (!contact.imageUrl.isNullOrBlank()) {
                                     Text("Image: ${contact.imageUrl}")
                                 }
                             }

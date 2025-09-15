@@ -25,3 +25,5 @@ abstract class ContactsDatabase : RoomDatabase() {
         }
     }
 }
+
+// migrations will be excuted  when we invoke the dao dunctions and it will give us a response object htet will impliment

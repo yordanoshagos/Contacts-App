@@ -10,7 +10,8 @@ import kotlinx.coroutines.launch
 
 class ContactsViewModel : ViewModel() {
     val contacts = MutableLiveData<List<Contact>>()
-    private val repo = ContactsRepository()
+    val repo = ContactsRepository()
+    val contactLiveData = MutableLiveData<Contact?>()
 
     fun getContacts() {
         repo.getContacts().observeForever { contactList ->
@@ -23,4 +24,12 @@ class ContactsViewModel : ViewModel() {
             repo.saveContact(contact)
         }
     }
+
+
+    fun getContactById(contactId: Int) {
+        repo.getContactById(contactId).observeForever { contact ->
+            contactLiveData.value = contact
+        }
+    }
+
 }

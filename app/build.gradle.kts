@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.kotlinx.coroutines.android)
+    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
 
 
     implementation(libs.kotlinx.coroutines.core)
