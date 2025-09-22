@@ -40,6 +40,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pulseshift.contactsapp.viewmodel.ContactsViewModel
 import java.io.File
+import java.io.FileOutputStream
 import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.shape.CircleShape
@@ -61,7 +62,8 @@ fun ContactDetailsScreen(
     ) { success ->
         if (success && tempPhotoUri != null) {
             photoUri = tempPhotoUri
-            viewModel.updateContactPhoto(contactId, tempPhotoUri.toString())
+            val persistedPath = persistImage(ctx, tempPhotoUri!!) ?: return@rememberLauncherForActivityResult
+            viewModel.updateContactPhoto(contactId, persistedPath)
         }
     }
 
@@ -70,7 +72,8 @@ fun ContactDetailsScreen(
     ) { uri: Uri? ->
         uri?.let {
             photoUri = it
-            viewModel.updateContactPhoto(contactId, it.toString())
+            val persistedPath = persistImage(ctx, it) ?: return@let
+            viewModel.updateContactPhoto(contactId, persistedPath)
         }
     }
 
@@ -90,7 +93,6 @@ fun ContactDetailsScreen(
     }
 
     val contact by viewModel.contactLiveData.observeAsState()
-
     val showDialog = remember { mutableStateOf(false) }
 
     Scaffold(
@@ -123,8 +125,16 @@ fun ContactDetailsScreen(
                     .clip(CircleShape)
                     .align(Alignment.CenterHorizontally)
             ) {
-                if (photoUri != null || (contact?.imageUrl?.isNotBlank() == true)) {
-                    val displayUri = photoUri ?: Uri.parse(contact?.imageUrl)
+                val displayUri = photoUri
+                    ?: contact?.imageUrl?.let { path ->
+                        if (path.startsWith("content://") || path.startsWith("http")) {
+                            Uri.parse(path)
+                        } else {
+                            getFileUri(ctx, path)
+                        }
+                    }
+
+                if (displayUri != null) {
                     Image(
                         painter = rememberAsyncImagePainter(displayUri),
                         contentDescription = "Profile Picture",
@@ -169,9 +179,7 @@ fun ContactDetailsScreen(
                 }
 
                 IconButton(
-                    onClick = {
-                        showDialog.value = true
-                    },
+                    onClick = { showDialog.value = true },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(40.dp)
@@ -270,6 +278,42 @@ fun createImageUri(context: Context): Uri? {
             "${context.packageName}.provider",
             imageFile
         )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun persistImage(context: Context, uri: Uri): String? {
+    return try {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "IMG_$timestamp.jpg"
+        val storageDir = File(context.getExternalFilesDir(null), "profile_pics")
+
+        if (!storageDir.exists()) {
+            storageDir.mkdirs()
+        }
+
+        val destinationFile = File(storageDir, fileName)
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(destinationFile).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
+
+        destinationFile.absolutePath
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun getFileUri(context: Context, filePath: String): Uri? {
+    return try {
+        val file = File(filePath)
+        if (!file.exists()) return null
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
     } catch (e: Exception) {
         e.printStackTrace()
         null
