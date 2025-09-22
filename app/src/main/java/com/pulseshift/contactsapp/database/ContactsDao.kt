@@ -16,6 +16,9 @@ interface ContactsDao {
     fun getAllContacts(): LiveData<List<Contact>>
     @Query("SELECT * FROM my_contacts WHERE contactId = :contactId")
     fun getContactById(contactId: Int): LiveData<Contact>
+
+    @Query("UPDATE my_contacts SET imageUrl = :photoUri WHERE contactId = :contactId")
+    suspend fun updateContactPhoto(contactId: Int, photoUri: String)
 }
 
 // everything you want to do onthe table you define it here

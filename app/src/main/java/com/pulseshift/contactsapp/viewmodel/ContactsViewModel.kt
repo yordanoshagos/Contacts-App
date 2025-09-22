@@ -32,4 +32,12 @@ class ContactsViewModel : ViewModel() {
         }
     }
 
+    fun updateContactPhoto(contactId: Int, photoUri: String) {
+        viewModelScope.launch {
+            repo.updateContactPhoto(contactId, photoUri)
+            // Optionally: refresh the LiveData to reflect changes immediately
+            getContactById(contactId)
+        }
+    }
+
 }

@@ -7,12 +7,14 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,7 +32,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
@@ -39,6 +42,7 @@ import com.pulseshift.contactsapp.viewmodel.ContactsViewModel
 import java.io.File
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.shape.CircleShape
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -52,13 +56,22 @@ fun ContactDetailsScreen(
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
+    // ✅ Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && tempPhotoUri != null) {
             photoUri = tempPhotoUri
-            // ✅ Update contact photo in ViewModel
             viewModel.updateContactPhoto(contactId, tempPhotoUri.toString())
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            photoUri = it
+            viewModel.updateContactPhoto(contactId, it.toString())
         }
     }
 
@@ -70,7 +83,6 @@ fun ContactDetailsScreen(
             tempPhotoUri?.let { uri ->
                 cameraLauncher.launch(uri)
             }
-        } else {
         }
     }
 
@@ -104,51 +116,73 @@ fun ContactDetailsScreen(
         ) {
             Spacer(Modifier.height(34.dp))
 
-            if (photoUri != null || (contact?.imageUrl?.isNotBlank() == true)) {
-                val displayUri = photoUri ?: Uri.parse(contact?.imageUrl)
-                Image(
-                    painter = rememberAsyncImagePainter(displayUri),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .clickable {
-                            when {
-                                cameraPermissionState.status.isGranted -> {
-                                    tempPhotoUri = createImageUri(ctx)
-                                    tempPhotoUri?.let { uri ->
-                                        cameraLauncher.launch(uri)
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(CircleShape)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                if (photoUri != null || (contact?.imageUrl?.isNotBlank() == true)) {
+                    val displayUri = photoUri ?: Uri.parse(contact?.imageUrl)
+                    Image(
+                        painter = rememberAsyncImagePainter(displayUri),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                when {
+                                    cameraPermissionState.status.isGranted -> {
+                                        tempPhotoUri = createImageUri(ctx)
+                                        tempPhotoUri?.let { uri ->
+                                            cameraLauncher.launch(uri)
+                                        }
+                                    }
+                                    else -> {
+                                        permissionLauncher.launch(Manifest.permission.CAMERA)
                                     }
                                 }
-                                else -> {
-                                    permissionLauncher.launch(Manifest.permission.CAMERA)
-                                }
-                            }
-                        },
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(150.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .clickable {
-                            when {
-                                cameraPermissionState.status.isGranted -> {
-                                    tempPhotoUri = createImageUri(ctx)
-                                    tempPhotoUri?.let { uri ->
-                                        cameraLauncher.launch(uri)
+                            },
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                when {
+                                    cameraPermissionState.status.isGranted -> {
+                                        tempPhotoUri = createImageUri(ctx)
+                                        tempPhotoUri?.let { uri ->
+                                            cameraLauncher.launch(uri)
+                                        }
+                                    }
+                                    else -> {
+                                        permissionLauncher.launch(Manifest.permission.CAMERA)
                                     }
                                 }
-                                else -> {
-                                    permissionLauncher.launch(Manifest.permission.CAMERA)
-                                }
-                            }
-                        },
-                    tint = MaterialTheme.colorScheme.primary,
-                )
+                            },
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        galleryLauncher.launch("image/*")
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Change Photo",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
 
             Spacer(Modifier.height(16.dp))
