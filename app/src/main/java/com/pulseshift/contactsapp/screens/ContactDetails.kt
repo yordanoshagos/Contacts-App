@@ -56,7 +56,6 @@ fun ContactDetailsScreen(
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
-    // ✅ Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -91,6 +90,8 @@ fun ContactDetailsScreen(
     }
 
     val contact by viewModel.contactLiveData.observeAsState()
+
+    val showDialog = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -169,7 +170,7 @@ fun ContactDetailsScreen(
 
                 IconButton(
                     onClick = {
-                        galleryLauncher.launch("image/*")
+                        showDialog.value = true
                     },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -183,6 +184,44 @@ fun ContactDetailsScreen(
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
+            }
+
+            if (showDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { showDialog.value = false },
+                    title = { Text("Change Profile Picture") },
+                    text = { Text("Choose source") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                when {
+                                    cameraPermissionState.status.isGranted -> {
+                                        tempPhotoUri = createImageUri(ctx)
+                                        tempPhotoUri?.let { uri ->
+                                            cameraLauncher.launch(uri)
+                                        }
+                                    }
+                                    else -> {
+                                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                                    }
+                                }
+                                showDialog.value = false
+                            }
+                        ) {
+                            Text("Camera")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = {
+                                galleryLauncher.launch("image/*")
+                                showDialog.value = false
+                            }
+                        ) {
+                            Text("Gallery")
+                        }
+                    }
+                )
             }
 
             Spacer(Modifier.height(16.dp))
