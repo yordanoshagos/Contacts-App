@@ -7,6 +7,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -27,16 +28,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.autofill.ContentDataType.Companion.Date
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
+import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.pulseshift.contactsapp.viewmodel.ContactsViewModel
 import java.io.File
 import java.util.Date
 import java.util.Locale
-import kotlin.Result.Companion.success
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -48,28 +50,28 @@ fun ContactDetailsScreen(
     val ctx = LocalContext.current
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
-    var cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
-
-    ){ success ->
-        if(success && tempPhotoUri!=null){
+    ) { success ->
+        if (success && tempPhotoUri != null) {
             photoUri = tempPhotoUri
+            // ✅ Update contact photo in ViewModel
+            viewModel.updateContactPhoto(contactId, tempPhotoUri.toString())
         }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ){isGranted ->
-        if (isGranted){
+    ) { isGranted ->
+        if (isGranted) {
             tempPhotoUri = createImageUri(ctx)
             tempPhotoUri?.let { uri ->
                 cameraLauncher.launch(uri)
             }
+        } else {
         }
-
-
     }
 
     LaunchedEffect(Unit) {
@@ -102,14 +104,52 @@ fun ContactDetailsScreen(
         ) {
             Spacer(Modifier.height(34.dp))
 
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(150.dp)
-                    .align(Alignment.CenterHorizontally),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            if (photoUri != null || (contact?.imageUrl?.isNotBlank() == true)) {
+                val displayUri = photoUri ?: Uri.parse(contact?.imageUrl)
+                Image(
+                    painter = rememberAsyncImagePainter(displayUri),
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(150.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            when {
+                                cameraPermissionState.status.isGranted -> {
+                                    tempPhotoUri = createImageUri(ctx)
+                                    tempPhotoUri?.let { uri ->
+                                        cameraLauncher.launch(uri)
+                                    }
+                                }
+                                else -> {
+                                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            }
+                        },
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            when {
+                                cameraPermissionState.status.isGranted -> {
+                                    tempPhotoUri = createImageUri(ctx)
+                                    tempPhotoUri?.let { uri ->
+                                        cameraLauncher.launch(uri)
+                                    }
+                                }
+                                else -> {
+                                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            }
+                        },
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -123,7 +163,7 @@ fun ContactDetailsScreen(
                 }
                 if (!it.imageUrl.isNullOrBlank()) {
                     Spacer(Modifier.height(4.dp))
-                    Text(text = "🖼️ ${it.imageUrl}")
+                    Text(text = "🖼️ Photo saved", color = MaterialTheme.colorScheme.primary)
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -140,27 +180,25 @@ fun ContactDetailsScreen(
     }
 }
 
-fun createImageUri( context: Context): Uri?{
+fun createImageUri(context: Context): Uri? {
     return try {
-        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss",
-            Locale.getDefault()).format(Date())
-
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "JPEG_$timestamp"
-        val storageDIr = File(context.getExternalFilesDir(null), "Pictures")
+        val storageDir = File(context.getExternalFilesDir(null), "Pictures")
 
-        if(!storageDIr.exists()){
-            storageDIr.mkdirs()
+        if (!storageDir.exists()) {
+            storageDir.mkdirs()
         }
 
-        val imageFile = File.createTempFile(fileName, ".jpg", storageDIr)
+        val imageFile = File.createTempFile(fileName, ".jpg", storageDir)
 
-        FileProvider.getUriForFile(context,
-            "${context.packageName}.provider", imageFile
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            imageFile
         )
-
-    }catch (e: Exception){
+    } catch (e: Exception) {
         e.printStackTrace()
         null
-    } as Uri?
-
+    }
 }
